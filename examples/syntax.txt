@@ -1,0 +1,80 @@
+letter ::= 'a' | 'b' | ... | 'z' | 'A' | ... | 'Z'
+digit ::= 0 | 1 | ... | 9
+alphaNum ::= letter | digit | '_'
+
+x       ::= alphanum | x alphaNum
+e       ::= x | λx.e | (e e) | Name
+stmt    ::= Name := λx.e
+
+Examples:
+
+True := λx.λy.x
+False := λx.λy.y
+
+Not := λp.((p False) True)
+
+0 := λf.λx.x
+1 := λf.λx.f x
+2 := λf.λx.f (f x)
+3 := λf.λx.f (f (f x))
+
+Succ := λn.λf.λx.(f (n (f x)))
+
+Reduction example:
+
+1) Expansion of definition
+
+    (Not False) -> (λp.((p False) True) False)
+
+2) β-Reduction
+
+    (λp.((p False) True) False) β->
+    ((False False) True)         ->
+    ((λx.λy.y False) True)      β->
+    (λy.y True)                 β->
+    True
+
+
+Notes:
+
+Expansion only when calling function
+
+Problem for α-substitution:
+
+(λx.λy.(x y) λy.y)
+
+DeBrujin's:
+
+(λx.λy.(x y) λy.y)
+(λ  λ  (2 1) λ  1)
+(λ  λ  (_ 1) λ  1)
+(   λ  (_ 1) λ  1)
+    λ  (λ 1 1)
+    λ       1
+
+(Not True) -> (λp.((p λx.λy.y) λx.λy.x) λx.λy.x)
+
+(λp.((p λx.λy.y) λx.λy.x) λx.λy.x)
+
+(λ ((0 λ  λ 0) λ λ 1) λ λ 1)
+(λ ((_ λ  λ 0) λ λ 1) λ λ 1)
+((λ λ 1 λ  λ 0) λ λ 1) -> ((λx.λy.x  λx.λy.y) λ λ 1)
+((λ λ 1 λ  λ 0) λ λ 1)
+((λ λ _  λ λ 0) λ λ 1)
+(λ λ λ 0  λ λ 1)
+(λ λ λ 0  λ λ 1)
+λ λ 0
+
+(Not True) -> (λp.(((p,1) (False,0)) (True,0)) (False,0))
+(λp.((_____ (False,0)) (True,0)) (False,0))
+
+(((False,0) (False,0)) (True,0))
+((λx.λy.(y,1) (False,0)) (True,0))
+((λx.λy.(y,1) (False,0)) (True,0))
+(λy.(y,1) (True,0))
+(λy._____ (True,0))
+(True, 0)
+
+(λx.λy.((x,1) (y,0)) λy.(y,0))
+(λx.λy.(_____ (y,0)) λy.(y,0))
+λy.(λy.(y,0) (y,0))
