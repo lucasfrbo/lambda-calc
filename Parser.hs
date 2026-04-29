@@ -7,8 +7,7 @@ import Control.Applicative
 lambda :: Char
 lambda = '\\'
 
--- Todo: implement own show
-
+-- TODO: implement own show
 data Statement
     = Eval Expr
     | Define Expr Expr

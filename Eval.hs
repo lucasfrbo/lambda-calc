@@ -14,9 +14,7 @@ calcBruijn = f []
         f vars (Def var@(Var x _) expr) = Def var $ f (x : vars) expr
         f vars (Var name _) = Var name $ maybe (-1) (+1) (elemIndex name vars)
 
--- betaReduce is a single reduction on a
 betaReduce :: Expr -> Expr
--- 0 or 1???
 betaReduce (Appl (Def _ f) x) = bRedDepth 1 f x
     where
         bRedDepth :: Int -> Expr -> Expr -> Expr
