@@ -3,20 +3,36 @@ module Main where
 import Parser
 import Eval
 import Control.Monad
-import Data.Map
+import Data.Map (Map)
+import qualified Data.Map as Map
 
-processInput :: String -> String
-processInput input = maybe "ERROR: Wrong input" f (run stmntP input)
+processInput :: FuncsMap -> String -> (FuncsMap, String)
+processInput fs input = maybe (fs, "ERROR: Wrong input") f (run stmntP input)
     where
-        f :: (String, Statement) -> String
-        f (_, Eval expr) = (show . eval . calcBruijn) expr
-        f (_, Define var expr) = undefined
--- TODO!!!
+        f :: (String, Statement) -> (FuncsMap, String)
+        f ("", Eval expr) = (fs, (show . eval fs . calcBruijn) expr)
+        f ("", def@(Define (Var name _) expr)) = (Map.insert name (calcBruijn expr) fs, show def)
 
+processInput' :: FuncsMap -> String -> (FuncsMap, String)
+processInput' fs input = case run stmntP input of
+    Just ("", result) -> case result of
+        Eval expr                      -> (fs, show $ eval fs $ calcBruijn expr)
+        def@(Define (Var name _) expr) -> (Map.insert name (calcBruijn expr) fs, show def)
+-- name ++ " := " ++ show expr
+    Just _  -> (fs, "ERROR: wrong input")
+    Nothing -> (fs, "ERROR: wrong input")
+
+replLoop :: FuncsMap -> IO ()
+replLoop fs = do
+    putStr ">> " --TODO (change)
+    input <- getLine
+    let (fs', output) = processInput' fs input
+    putStrLn output
+    -- print fs' DEBUG
+    replLoop fs'
+        
 
 main :: IO ()
-main = forever $ do
-    input <- getLine
-    putStrLn $ processInput input
-    -- putStrLn $ maybe "ERROR: Wrong input" (show . snd) $ run stmntP input
-    return ()
+main = do
+    putStrLn "Lambda Calc REPL"
+    replLoop Map.empty

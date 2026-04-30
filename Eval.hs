@@ -2,8 +2,11 @@ module Eval where
 
 import Parser
 import Data.List (elemIndex)
+import Data.Map (Map)
+import qualified Data.Map as Map
 
--- TODO: Beta substitution
+type FuncsMap = Map String Expr
+
 -- TODO: Keep global symbols
 
 calcBruijn :: Expr -> Expr
@@ -22,11 +25,12 @@ betaReduce (Appl (Def _ f) x) = bRedDepth 1 f x
         bRedDepth d var@(Var _ vd) x = if d == vd then x else var
         bRedDepth d (Appl e1 e2)   x = Appl (bRedDepth d e1 x) (bRedDepth d e2 x)
 
-eval :: Expr -> Expr
-eval var@(Var {}) = var
-eval (Def var expr) = Def var $ eval expr
+eval :: FuncsMap -> Expr -> Expr
+eval fs var@(Var {}) = var
+eval fs (Def var expr) = Def var $ eval fs expr
 
-eval appl@(Appl      (Def  {}) _) = eval $ betaReduce appl
-eval      (Appl appl@(Appl {}) x) = eval $ Appl (eval appl) x
-eval      (Appl var@(Var name 0) x) = undefined
-eval      (Appl var@(Var {}) x) = Appl var x
+eval fs appl@(Appl      (Def  {}) _) = eval fs $ betaReduce appl
+eval fs      (Appl appl@(Appl {}) x) = eval fs $ Appl (eval fs appl) x
+eval fs      (Appl var@(Var name d) x) 
+    | d == (-1) = eval fs $ Appl (fs Map.! name) x
+    | otherwise = Appl var x

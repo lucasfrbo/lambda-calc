@@ -11,7 +11,7 @@ lambda = '\\'
 data Statement
     = Eval Expr
     | Define Expr Expr
-    deriving (Show, Eq)
+    deriving (Eq, Show)
 
 data Expr
     = Var String Int    -- x
@@ -24,7 +24,6 @@ instance Show Expr where
     show (Var name _) = name
     show (Def (Var var _) expr) = "\\" ++ var ++ "." ++ show expr
     show (Appl expr1 expr2) = "(" ++ show expr1 ++ " " ++ show expr2 ++ ")"
-
 
 newtype Parser a = Parser {run :: String -> Maybe (String, a)}
 
