@@ -7,25 +7,27 @@ import Control.Applicative
 lambda :: Char
 lambda = '\\'
 
+type VarName = String
+
 -- TODO: implement own show
 data Statement
     = Eval Expr
-    | Define Expr Expr
+    | Define VarName Expr
     deriving (Eq, Show)
 
 data Expr
-    = Var String Int    -- x
-    | Def Expr Expr     -- λx.x
-    | Appl Expr Expr    -- (λx.x y)
+    = Var VarName Int    -- x
+    | Def VarName Expr   -- λx.x
+    | Appl Expr Expr     -- (λx.x y)
     deriving (Eq)
 
 instance Show Expr where
     show :: Expr -> String
     show (Var name _) = name
-    show (Def (Var var _) expr) = "\\" ++ var ++ "." ++ show expr
+    show (Def var expr) = "\\" ++ var ++ "." ++ show expr
     show (Appl expr1 expr2) = "(" ++ show expr1 ++ " " ++ show expr2 ++ ")"
 
-newtype Parser a = Parser {run :: String -> Maybe (String, a)}
+newtype Parser a = Parser {runParser :: String -> Maybe (String, a)}
 
 instance Functor Parser where
     fmap :: (a -> b) -> Parser a -> Parser b
@@ -63,6 +65,13 @@ charP c = Parser f
         f [] = Nothing
 
 -- x, Add, 3 ...
+nameP :: Parser VarName
+nameP = Parser $ \str ->
+    case swap $ span isVarName str of
+        (_, "")     -> Nothing
+        (str', var) -> Just(str', var)
+
+-- TODO: use nameP in definition
 varP :: Parser Expr
 varP = Parser $ \str ->
     case swap $ span isVarName str of
@@ -71,7 +80,7 @@ varP = Parser $ \str ->
 
 -- \x.x
 defP :: Parser Expr
-defP = Def <$> (charP lambda *> ws *> varP <* ws <* charP '.') <*> exprP
+defP = Def <$> (charP lambda *> ws *> nameP <* ws <* charP '.') <*> exprP
 
 -- (f x)
 applP :: Parser Expr
@@ -83,8 +92,9 @@ ws = Parser (pure . swap . span isSpace)
 exprP :: Parser Expr
 exprP = ws *> (defP <|> applP <|> varP) <* ws
 
+
 defineP :: Parser Statement
-defineP = Define <$> (ws *> varP <* ws <* charP '=') <*> exprP
+defineP = Define <$> (ws *> nameP <* ws <* charP '=') <*> exprP
 
 stmntP :: Parser Statement
 stmntP = ws *> defineP <|> (Eval <$> exprP) <* ws

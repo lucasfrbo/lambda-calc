@@ -14,7 +14,7 @@ calcBruijn = f []
     where
         f :: [String] -> Expr -> Expr
         f vars (Appl ex1 ex2) = Appl (f vars ex1) (f vars ex2)
-        f vars (Def var@(Var x _) expr) = Def var $ f (x : vars) expr
+        f vars (Def var expr) = Def var $ f (var : vars) expr
         f vars (Var name _) = Var name $ maybe (-1) (+1) (elemIndex name vars)
 
 betaReduce :: Expr -> Expr
