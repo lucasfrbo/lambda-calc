@@ -9,7 +9,6 @@ lambda = '\\'
 
 type VarName = String
 
--- TODO: implement own show
 data Statement
     = Eval Expr
     | Define VarName Expr
@@ -25,7 +24,7 @@ instance Show Expr where
     show :: Expr -> String
     show (Var name _) = name
     show (Def var expr) = "\\" ++ var ++ "." ++ show expr
-    show (Appl expr1 expr2) = "(" ++ show expr1 ++ " " ++ show expr2 ++ ")"
+    show (Appl expr1 expr2) = show expr1 ++ " (" ++ show expr2 ++ ")"
 
 newtype Parser a = Parser {runParser :: String -> Maybe (String, a)}
 
@@ -37,7 +36,7 @@ instance Functor Parser where
 
 instance Applicative Parser where
     pure :: a -> Parser a
-    pure x = Parser $ \str -> Just(str, x)
+    pure x = Parser $ \str -> Just (str, x)
 
     (<*>) :: Parser (a -> b) -> Parser a -> Parser b
     (Parser f) <*> (Parser p) = Parser $ \str -> do
@@ -69,29 +68,26 @@ nameP :: Parser VarName
 nameP = Parser $ \str ->
     case swap $ span isVarName str of
         (_, "")     -> Nothing
-        (str', var) -> Just(str', var)
+        (str', var) -> Just (str', var)
 
--- TODO: use nameP in definition
 varP :: Parser Expr
-varP = Parser $ \str ->
-    case swap $ span isVarName str of
-        (_, "")     -> Nothing
-        (str', var) -> Just(str', Var var (-1))
+varP = flip Var (-1) <$> nameP
 
 -- \x.x
 defP :: Parser Expr
 defP = Def <$> (charP lambda *> ws *> nameP <* ws <* charP '.') <*> exprP
 
--- (f x)
-applP :: Parser Expr
-applP = Appl <$> (charP '(' *> ws *> exprP <* ws) <*> (exprP <* ws <* charP ')')
+atomP :: Parser Expr
+atomP = varP <|> (charP '(' *> ws *> exprP <* ws <* charP ')' )
+
+itemsP :: Parser Expr
+itemsP = foldl1 Appl <$> some (atomP <* ws)
 
 ws :: Parser String
 ws = Parser (pure . swap . span isSpace)
 
 exprP :: Parser Expr
-exprP = ws *> (defP <|> applP <|> varP) <* ws
-
+exprP = ws *> (defP <|> itemsP) <* ws
 
 defineP :: Parser Statement
 defineP = Define <$> (ws *> nameP <* ws <* charP '=') <*> exprP

@@ -1,7 +1,11 @@
 const Zero = (f) => (x) => x
-
+const Id = (x) => x
+const Const = k => _ => k
 // SUCC := λn.λf.λx.f (n f x)
 const Succ = (n) => (f) => (x) => f (n (f) (x))
+
+const Rev = x => g => h => h (g (x))
+const Pred = (n) => (f) => (x) => n (Rev (f)) (Const(x)) (Id)
 
 const One     = Succ(Zero)
 const Two     = Succ(One)
@@ -40,3 +44,8 @@ PrintNum (Plus (Six) (Three))
 PrintNum (Mult (Six) (Seven))
 
 PrintBool (Not (Or (False) (True)))
+
+PrintNum(Pred (Zero))
+PrintNum(Pred (One))
+PrintNum(Pred (Five))
+PrintNum(Pred (Ten))

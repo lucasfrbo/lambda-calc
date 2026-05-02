@@ -1,0 +1,67 @@
+Id = \x.x
+Const = \k.\_.k
+$ = \f.\x. f x
+Y = \f.(\x.f (x x)) (\x.f (x x))
+
+True = \x.\y.x
+False = \x.\y.y
+
+Not = \p. p False True
+And = \p.\q. p q p
+Or  = \p.\q. p p q
+Xor = \p.\q. And (Or p q) (Not (And p q))
+
+? = \p.\a.\b. p a b
+
+++ = \n.\f.\x. f (n f x)
+-- = \n.\f.\x. n (\g.\h. h (g f)) (Const x) (Id)
+
++ = \m.\n. m ++ n
+- = \m.\n. n -- m
+
+* = \m.\n. m (+ n) 0
+^ = \b.\e. e (* b) 1
+
+is0 = \n. n (Const False) True
+
+le = \x.\y. is0 (-  x y)
+>  = \x.\y. Not (le x y)
+eq = \x.\y. And (le x y) (le y x)
+ge = \x.\y. Or  (eq x y) (>  x y)
+<  = \x.\y. Not (ge x y)
+
+Fact = \n. ? (is0 n) 1 (* n (Fact (-- n)))
+Fact2 = \r.\n. ? (is0 n) 1 (* n (r (-- n)))
+
+,   = \x.\y.\f. f x y
+Fst = \p.p True
+Snd = \p.p False
+
+[] = Const True
+is[] = \pair. pair (Const (Const False))
+
+is[]num = 
+
+Head = Fst
+Tail = Snd
+at = \n.\list. Head (n Tail list)
+
+example = , 1 (, 2 (, 3 []))
+
+Map = \f.\list. (is[] list) [] (, (f (Head list)) (Map f (Tail list)))
+Foldr = \f.\start.\list. ? (is[] list) start (f (Head list) (Foldr f start (Tail list)))
+
+;; [ 1 ]
+
+[ = \elem. ? (is0 elem) [] (\e'. (, elem e'))
+
+] = 0
+
+Flip = \f.\x.\y. f y x
+Lock = \k. Const (Lock k)
+TimerLock = \k.\t. Const (? (is0 t) k (TimerLock k (-- t)))
+
+Some = \x. \f. Some (f x)
+None =     \f. None
+
+Unwrap 
