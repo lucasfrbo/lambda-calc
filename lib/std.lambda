@@ -30,7 +30,7 @@ eq = \x.\y. And (le x y) (le y x)
 ge = \x.\y. Or  (eq x y) (>  x y)
 <  = \x.\y. Not (ge x y)
 
-Fact = \n. ? (is0 n) 1 (* n (Fact (-- n)))
+! = \n. ? (is0 n) 1 (* n (! (-- n)))
 Fact2 = \r.\n. ? (is0 n) 1 (* n (r (-- n)))
 
 ,   = \x.\y.\f. f x y
@@ -40,22 +40,24 @@ Snd = \p.p False
 [] = Const True
 is[] = \pair. pair (Const (Const False))
 
-is[]num = 
+example = , 0 (, 1 (, 2 (, 3 [])))
+example = [ 0 , 1 , 2 , 3 ]
 
 Head = Fst
 Tail = Snd
-at = \n.\list. Head (n Tail list)
+at =     \n.\list. Head (n Tail list)
+Len =    \list. ? (is[] list) 0 (+ 1 (Len (Tail list)))
+Map =    \f.\list. (is[] list) [] (, (f (Head list)) (Map f (Tail list)))
+Foldr =  \f.\start.\list. ? (is[] list) start (f (Head list) (Foldr f start (Tail list)))
+Append = \elem.\list. ? (is[] list) (, elem []) (, (Head list) (Append elem (Tail list)))
+Join = \list1.\list2. ? Foldr , list2 list1
+Range = \n. ? (is0 n) ([ 0 ]) (Append n (Range (-- n)))
 
-example = , 1 (, 2 (, 3 []))
-
-Map = \f.\list. (is[] list) [] (, (f (Head list)) (Map f (Tail list)))
-Foldr = \f.\start.\list. ? (is[] list) start (f (Head list) (Foldr f start (Tail list)))
-
-;; [ 1 ]
-
-[ = \elem. ? (is0 elem) [] (\e'. (, elem e'))
-
-] = 0
+_[ =  \list.\comma. ? (is[] (comma _ True)) list (\elem. _[ (Append elem list))
+[ = _[ [] ,
+] = []
+;; There are 2 options: either you define "[ = _[ [] ," which lets you start with the first element instead of a comma ([ 2 , 3 ...) at the cost of [ ] being an error. Or you can have "is[] [ ] = True" by setting "[ = _[ []" at the cost of having to start lists with a comma ([, 1 , 2 , 3]).
+;; Since [] already exists, I believe the first one makes more sense.
 
 Flip = \f.\x.\y. f y x
 Lock = \k. Const (Lock k)
@@ -63,5 +65,3 @@ TimerLock = \k.\t. Const (? (is0 t) k (TimerLock k (-- t)))
 
 Some = \x. \f. Some (f x)
 None =     \f. None
-
-Unwrap 

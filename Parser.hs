@@ -11,7 +11,7 @@ type VarName = String
 
 data Statement
     = Eval Expr
-    | Define VarName Expr
+    | Define Bool VarName Expr
     deriving (Eq, Show)
 
 data Expr
@@ -89,8 +89,14 @@ ws = Parser (pure . swap . span isSpace)
 exprP :: Parser Expr
 exprP = ws *> (defP <|> itemsP) <* ws
 
+defineEP :: Parser Statement
+defineEP = Define False <$> (ws *> nameP <* ws <* charP '=') <*> exprP
+
+defineLP :: Parser Statement
+defineLP = Define True <$> (ws *> nameP <* ws <* charP ':' <* charP '=') <*> exprP
+
 defineP :: Parser Statement
-defineP = Define <$> (ws *> nameP <* ws <* charP '=') <*> exprP
+defineP = defineLP <|> defineEP
 
 stmntP :: Parser Statement
 stmntP = ws *> defineP <|> (Eval <$> exprP) <* ws

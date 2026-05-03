@@ -15,7 +15,7 @@ defaultLibs = ["lib/std.lambda", "lib/num.lambda"]
 processInput :: FuncsMap -> String -> (FuncsMap, String)
 processInput fs input = case runParser stmntP input of
     Just ("", result) -> case result of
-        Define name expr -> (Map.insert name (calcBruijn expr) fs, name ++ " := " ++ show expr) -- Lazy Eval
+        Define islazy name expr -> (Map.insert name (islazy, calcBruijn expr) fs, name ++ (if islazy then " := " else " = ") ++ show expr)
         Eval        expr -> (fs, show expr')
             where expr' = eval fs $ calcBruijn expr
     Just _  -> (fs, "ERROR: wrong input")
